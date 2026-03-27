@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.h5
+*.keras
+dataset/
+processed/
+.DS_Store
+Thumbs.db
+*.log
+node_modules/
+.streamlit/
+*.tmp
+*.temp
