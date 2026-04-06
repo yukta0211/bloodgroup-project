@@ -2,12 +2,13 @@ import streamlit as st
 import cv2
 import numpy as np
 from tensorflow.keras.models import load_model
+from utils import preprocess_image, get_prediction_label
 
 model = load_model("blood_model.h5")
 
-classes = ["A+","A-","AB+","AB-","B+","B-","O+","O-"]
+st.title("AI-Based Blood Group Detection using Fingerprint")
 
-st.title("Fingerprint Blood Group Detection")
+st.write("Upload a fingerprint image to predict the blood group using a trained CNN model.")
 
 uploaded_file = st.file_uploader("Upload Fingerprint Image")
 
@@ -15,28 +16,23 @@ if uploaded_file:
     file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
     img = cv2.imdecode(file_bytes, 1)
 
-    st.image(img, caption="Uploaded Image")
+    st.subheader("Uploaded Image")
+    st.image(img)
 
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    gray = cv2.resize(gray,(128,128))
-    gray = cv2.equalizeHist(gray)
+    # Preprocess using utils
+    processed_img, thresh = preprocess_image(img)
 
-    thresh = cv2.adaptiveThreshold(
-        gray,255,
-        cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-        cv2.THRESH_BINARY,
-        11,2
-    )
+    st.subheader("Processed Fingerprint")
+    st.image(thresh)
 
-    st.image(thresh, caption="Processed Fingerprint")
+    prediction = model.predict(processed_img)
 
-    img = thresh / 255.0
-    img = np.reshape(img,(1,128,128,1))
-
-    prediction = model.predict(img)
-
-    result = classes[np.argmax(prediction)]
+    result = get_prediction_label(prediction)
     confidence = np.max(prediction) * 100
 
-    st.success(f"Prediction: {result}")
-    st.write(f"Confidence: {confidence:.2f}%")
+    st.subheader("Prediction Result")
+    st.success(f"Blood Group: {result}")
+
+    st.subheader("Confidence Level")
+    st.progress(int(confidence))
+    st.write(f"{confidence:.2f}%")
